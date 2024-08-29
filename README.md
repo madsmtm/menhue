@@ -1,4 +1,4 @@
-# Menhue - Menu bar interface for Phillips Hue lights
+# Menhue - Status bar interface for Phillips Hue lights
 
 Mostly an open-source clone of https://huemenu.app/, but without the (IMO) excessive polling it does to always be up to date. Starting a request on click is enough to feel interactive.
 
