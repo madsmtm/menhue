@@ -2,12 +2,12 @@
 
 Mostly an open-source clone of https://huemenu.app/, but without the (IMO) excessive polling it does to always be up to date. Starting a request on click is enough to feel interactive.
 
-Very feature-incomplete and work-in-progress, don't actually use this for anything other than inspiration.
+Very feature-incomplete and work-in-progress, don't actually use this for anything other than inspiration for how to use [`objc2`](https://docs.rs/objc2/).
 
 
 ## Design decisions
 
-Uses only Foundation APIs, to get a feel for what that's like.
+Uses only Cocoa APIs, to get a feel for what that's like.
 
 In a real-world application, I'd strongly recommend `serde` and `serde_json` for interacting with JSON data, and `reqwest` for doing the URL requests.
 
