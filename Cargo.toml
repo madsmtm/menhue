@@ -1,0 +1,14 @@
+[package]
+name = "menhue"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+block2 = "0.5.1"
+objc2 = "0.5.2"
+objc2-foundation = { version = "0.2.2", features = ["all"] }
+objc2-app-kit = { version = "0.2.2", features = ["all"] }
+reqwest = { version = "0.12.7", features = ["blocking"] }
+serde = "1.0.209"
+serde_json = "1.0.127"
+serde_derive = "1.0.209"
