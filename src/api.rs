@@ -39,8 +39,6 @@ impl Session {
             // Time out after 5 seconds; the Hue bridge is on the local network
             config.setTimeoutIntervalForRequest(5.0);
             // TODO
-            config.setWaitsForConnectivity(true);
-            // TODO
             config.setHTTPMaximumConnectionsPerHost(1);
             // We only make requests on direct user action
             config.setNetworkServiceType(
