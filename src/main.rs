@@ -6,9 +6,7 @@ use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
 use objc2::{declare_class, msg_send_id, mutability, ClassType, DeclaredClass};
 use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy, NSApplicationDelegate};
-use objc2_foundation::{
-    ns_string, MainThreadMarker, NSCopying, NSNotification, NSObject, NSObjectProtocol, NSString,
-};
+use objc2_foundation::{MainThreadMarker, NSNotification, NSObject, NSObjectProtocol, NSString};
 
 use crate::api::Session;
 use crate::menu::MenuDelegate;
@@ -66,20 +64,16 @@ declare_class!(
 impl AppDelegate {
     fn new(mtm: MainThreadMarker) -> Retained<Self> {
         // TODO: Store this with CoreData
-        const HOST: Option<&'static str> = option_env!("HOST");
-        let host_from_env = ns_string!(match HOST {
-            Some(host) => host,
-            None => "",
-        });
-        let host = Rc::new(RefCell::new(HOST.map(|_| host_from_env.copy())));
+        let host = std::env::var("HOST")
+            .map(|var| NSString::from_str(&var))
+            .ok();
+        let host = Rc::new(RefCell::new(host));
 
         // TODO: Store this with CoreData
-        const USERNAME: Option<&'static str> = option_env!("USERNAME_KEY");
-        let username_from_env = ns_string!(match USERNAME {
-            Some(username) => username,
-            None => "",
-        });
-        let username = Rc::new(RefCell::new(USERNAME.map(|_| username_from_env.copy())));
+        let username = std::env::var("USERNAME_KEY")
+            .map(|var| NSString::from_str(&var))
+            .ok();
+        let username = Rc::new(RefCell::new(username));
 
         let this = mtm.alloc().set_ivars(Ivars {
             session: Session::new(mtm, host, username.clone()),
