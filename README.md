@@ -72,3 +72,18 @@ flowchart TD;
   EditLamp-- Failure -->MenuOpenWithError;
   EditLamp-- Success -->MenuOpen;
 ```
+
+## Nix
+
+```nix
+# darwin-configuration.nix
+{
+  imports = [ menhue/service.nix ];
+
+  services.menhue = {
+    enable = true;
+    host = "...";
+    username = "...";
+  };
+}
+```
