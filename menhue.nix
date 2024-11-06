@@ -8,6 +8,9 @@ rustPlatform.buildRustPackage {
 
   cargoLock = {
     lockFile = ./Cargo.lock;
+    outputHashes = {
+      "objc2-0.5.2" = "sha256-VCkZnZsR1o5Mo+HKPHnnaO46HZdCbAXxYllR7ShZ6l8=";
+    };
   };
 
   # For easier debugging

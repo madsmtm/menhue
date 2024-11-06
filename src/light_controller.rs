@@ -4,8 +4,8 @@ use std::{
 };
 
 use objc2::{
-    declare_class, msg_send_id, mutability, rc::Retained, runtime::AnyObject, sel, ClassType,
-    DeclaredClass,
+    declare_class, msg_send_id, rc::Retained, runtime::AnyObject, sel, ClassType, DeclaredClass,
+    MainThreadOnly, Message,
 };
 use objc2_app_kit::{
     NSLayoutAttribute, NSLayoutConstraint, NSSlider, NSStackView, NSStackViewDistribution,
@@ -33,7 +33,7 @@ declare_class!(
 
     unsafe impl ClassType for LightController {
         type Super = NSObject;
-        type Mutability = mutability::MainThreadOnly;
+        type ThreadKind = dyn MainThreadOnly;
         const NAME: &'static str = "LightControl";
     }
 
@@ -99,7 +99,7 @@ impl LightController {
             slider.setIntegerValue(bri);
             stack.addArrangedSubview(&slider);
 
-            NSLayoutConstraint::activateConstraints(&NSArray::from_id_slice(&[
+            NSLayoutConstraint::activateConstraints(&NSArray::from_retained_slice(&[
                 stack.leftAnchor().constraintEqualToAnchor_constant(
                     &view.layoutMarginsGuide().leftAnchor(),
                     -4.0,
@@ -138,7 +138,7 @@ impl LightController {
     fn update_bri_from_slider(&self) {
         let bri = unsafe { self.ivars().slider.integerValue() };
         let path = format!("/lights/{}/state", self.ivars().light_id);
-        let json = NSDictionary::from_id_slice(
+        let json = NSDictionary::from_retained_objects(
             &[
                 ns_string!("on"),
                 ns_string!("bri"),
@@ -175,7 +175,7 @@ impl LightController {
                     sel!(setBri:),
                     None,
                     interval,
-                    &NSArray::from_id_slice(&[NSRunLoopCommonModes.copy()]),
+                    &NSArray::from_slice(&[NSRunLoopCommonModes]),
                 )
             };
         }

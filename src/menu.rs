@@ -3,7 +3,7 @@ use std::cell::RefCell;
 
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
-use objc2::{declare_class, msg_send_id, mutability, sel, ClassType, DeclaredClass};
+use objc2::{declare_class, msg_send_id, sel, ClassType, DeclaredClass, MainThreadOnly, Message};
 use objc2_app_kit::{
     NSImage, NSMenu, NSMenuDelegate, NSMenuItem, NSStatusBar, NSStatusItem, NSStatusItemBehavior,
     NSVariableStatusItemLength,
@@ -14,7 +14,6 @@ use objc2_foundation::{
 };
 
 use crate::api::Session;
-use crate::cast::Downcast;
 use crate::light_controller::LightController;
 use crate::AppDelegate;
 
@@ -33,7 +32,7 @@ declare_class!(
 
     unsafe impl ClassType for MenuDelegate {
         type Super = NSObject;
-        type Mutability = mutability::MainThreadOnly;
+        type ThreadKind = dyn MainThreadOnly;
         const NAME: &'static str = "MenuDelegate";
     }
 
@@ -134,7 +133,7 @@ impl MenuDelegate {
         let mtm = MainThreadMarker::from(self);
         let menu = &self.ivars().menu;
         unsafe {
-            let mut light_controllers = self.ivars().light_controllers.borrow_mut();
+            let light_controllers = self.ivars().light_controllers.borrow_mut();
 
             // Clear existing menus
             while let Some(item) = menu.itemWithTag(TAG_LIGHT) {
@@ -142,29 +141,34 @@ impl MenuDelegate {
             }
             light_controllers.removeAllObjects();
 
-            // NOTE: Unsound, fix this
             let data = obj
-                .downcast::<NSDictionary<NSString, NSDictionary<NSString, NSObject>>>()
+                .downcast_ref::<NSDictionary>()
                 .expect("invalid response");
 
             // Add new menus
             for (i, light_id) in data.keys().enumerate() {
-                let dict = data.get(light_id).unwrap();
+                let light_id = light_id.downcast::<NSString>().expect("invalid response");
+
+                let dict = data
+                    .objectForKey(&light_id)
+                    .unwrap()
+                    .downcast::<NSDictionary>()
+                    .expect("invalid response");
 
                 let name = dict
-                    .get(ns_string!("name"))
+                    .objectForKey(ns_string!("name"))
                     .expect("name")
                     .downcast::<NSString>()
                     .expect("invalid name");
 
                 let state = dict
-                    .get(ns_string!("state"))
+                    .objectForKey(ns_string!("state"))
                     .expect("state")
-                    .downcast::<NSDictionary<NSString>>()
+                    .downcast::<NSDictionary>()
                     .expect("invalid state");
 
                 let reachable = state
-                    .get(ns_string!("reachable"))
+                    .objectForKey(ns_string!("reachable"))
                     .expect("reachable")
                     .downcast::<NSNumber>()
                     .expect("invalid reachable")
@@ -176,17 +180,17 @@ impl MenuDelegate {
                 }
 
                 let bri = state
-                    .get(ns_string!("bri"))
+                    .objectForKey(ns_string!("bri"))
                     .expect("bri")
                     .downcast::<NSNumber>()
                     .expect("invalid bri")
                     .integerValue();
 
                 let light_control =
-                    LightController::new(light_id, name, bri, self.ivars().session.clone(), mtm);
+                    LightController::new(&light_id, &name, bri, self.ivars().session.clone(), mtm);
 
                 let item = NSMenuItem::new(mtm);
-                item.setTitle(name);
+                item.setTitle(&name);
                 item.setView(Some(light_control.view()));
                 item.setTag(TAG_LIGHT);
                 menu.insertItem_atIndex(&item, i as isize + 1);

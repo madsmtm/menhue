@@ -12,6 +12,13 @@ objc2 = "0.5.2"
 objc2-foundation = { version = "0.2.2", features = ["all"] }
 objc2-app-kit = { version = "0.2.2", features = ["all"] }
 
+# Use unstable objc2
+[patch.crates-io]
+block2 = { git = "https://github.com/madsmtm/objc2" }
+objc2 = { git = "https://github.com/madsmtm/objc2" }
+objc2-foundation = { git = "https://github.com/madsmtm/objc2" }
+objc2-app-kit = { git = "https://github.com/madsmtm/objc2" }
+
 [profile.dev]
 # For possibly better system backtraces on macOS
 panic = "abort"

@@ -4,17 +4,15 @@ use std::{
 };
 
 use block2::RcBlock;
-use objc2::{rc::Retained, runtime::AnyObject, ClassType};
+use objc2::{rc::Retained, runtime::AnyObject, Message};
 use objc2_foundation::{
     ns_string, MainThreadMarker, NSArray, NSCopying, NSData, NSDictionary, NSError,
     NSHTTPURLResponse, NSJSONReadingOptions, NSJSONSerialization, NSJSONWritingOptions,
-    NSLocalizedDescriptionKey, NSMutableArray, NSMutableURLRequest, NSNumber, NSObject,
-    NSOperationQueue, NSString, NSURLComponents, NSURLErrorKey, NSURLRequestCachePolicy,
+    NSLocalizedDescriptionKey, NSMutableArray, NSMutableURLRequest, NSNumber, NSOperationQueue,
+    NSString, NSURLComponents, NSURLErrorKey, NSURLRequestCachePolicy,
     NSURLRequestNetworkServiceType, NSURLResponse, NSURLSession, NSURLSessionConfiguration,
     NSURLSessionTask,
 };
-
-use crate::cast::Downcast;
 
 pub const HTTP_STATUS_CODE_DOMAIN: &'static str = "HTTPCodeError";
 pub const HUE_API_ERROR: &'static str = "HueAPIError";
@@ -88,7 +86,7 @@ impl Session {
                 .expect("json writing")
             });
 
-            let mut request = NSMutableURLRequest::requestWithURL(&url);
+            let request = NSMutableURLRequest::requestWithURL(&url);
             request.setCachePolicy(NSURLRequestCachePolicy::NSURLRequestReloadIgnoringCacheData);
             request.setHTTPMethod(method);
             request.setHTTPBody(body.as_deref());
@@ -113,14 +111,14 @@ impl Session {
                     let body = body.as_ref().expect("body should be set if not an error");
 
                     let response = response
-                        .downcast::<NSHTTPURLResponse>()
+                        .downcast_ref::<NSHTTPURLResponse>()
                         .expect("invalid kind of NSHTTPURLResponse");
                     let status_code = response.statusCode();
                     if !(200..300).contains(&status_code) {
                         // TODO: Attempt to parse body here?
-                        let dict = NSDictionary::from_vec(
+                        let dict = NSDictionary::from_retained_objects(
                             &[NSURLErrorKey, NSLocalizedDescriptionKey],
-                            vec![
+                            &[
                                 Retained::into_super(Retained::into_super(url.retain())),
                                 Retained::into_super(Retained::into_super(
                                     NSHTTPURLResponse::localizedStringForStatusCode(status_code),
@@ -145,10 +143,10 @@ impl Session {
                     };
 
                     let parse_error = |json: &AnyObject| {
-                        let Some(json) = json.downcast::<NSDictionary<NSString, NSObject>>() else {
-                            let dict = NSDictionary::from_vec(
+                        let Some(json) = json.downcast_ref::<NSDictionary>() else {
+                            let dict = NSDictionary::from_retained_objects(
                                 &[NSURLErrorKey, NSLocalizedDescriptionKey],
-                                vec![
+                                &[
                                     Retained::into_super(Retained::into_super(url.retain())),
                                     Retained::into_super(Retained::into_super(
                                         ns_string!("invalid error response object").copy(),
@@ -162,22 +160,23 @@ impl Session {
                             );
                         };
                         let status_code = json
-                            .get(ns_string!("type"))
-                            .and_then(|n| n.downcast::<NSNumber>())
+                            .objectForKey(ns_string!("type"))
+                            .and_then(|n| n.downcast::<NSNumber>().ok())
                             .map(|n| n.as_isize())
                             .unwrap_or(0);
                         let description = json
-                            .get(ns_string!("description"))
+                            .objectForKey(ns_string!("description"))
                             .map(|s| {
-                                s.downcast::<NSString>()
-                                    .unwrap_or(ns_string!("incorrect error description type"))
+                                s.downcast::<NSString>().unwrap_or_else(|_| {
+                                    ns_string!("incorrect error description type").copy()
+                                })
                             })
-                            .unwrap_or_else(|| ns_string!("no error description"));
+                            .unwrap_or_else(|| ns_string!("no error description").copy());
 
                         // TODO: Hue error is not localized
-                        let dict = NSDictionary::from_vec(
+                        let dict = NSDictionary::from_retained_objects(
                             &[NSURLErrorKey, NSLocalizedDescriptionKey],
-                            vec![
+                            &[
                                 Retained::into_super(Retained::into_super(url.retain())),
                                 Retained::into_super(Retained::into_super(description.copy())),
                             ],
@@ -189,14 +188,14 @@ impl Session {
                         )
                     };
 
-                    if let Some(array) = json.downcast::<NSArray>() {
-                        let mut result = NSMutableArray::arrayWithCapacity(array.len());
+                    if let Some(array) = json.downcast_ref::<NSArray>() {
+                        let result = NSMutableArray::arrayWithCapacity(array.len());
 
                         // Scan the array for errors
                         for item in array {
-                            if let Some(dict) = item.downcast::<NSDictionary<NSString>>() {
-                                if let Some(error) = dict.get(ns_string!("error")) {
-                                    return completion_handler(Err(parse_error(error)));
+                            if let Some(dict) = item.downcast_ref::<NSDictionary>() {
+                                if let Some(error) = dict.objectForKey(ns_string!("error")) {
+                                    return completion_handler(Err(parse_error(&error)));
                                 }
 
                                 // Unwrap "success" key, if present
@@ -206,15 +205,15 @@ impl Session {
                                 }
                             }
 
-                            result.addObject(item);
+                            result.addObject(&item);
                         }
 
                         completion_handler(Ok(Retained::into_super(Retained::into_super(
                             Retained::into_super(result),
                         ))))
-                    } else if let Some(dict) = json.downcast::<NSDictionary<NSString>>() {
-                        if let Some(error) = dict.get(ns_string!("error")) {
-                            return completion_handler(Err(parse_error(error)));
+                    } else if let Some(dict) = json.downcast_ref::<NSDictionary>() {
+                        if let Some(error) = dict.objectForKey(ns_string!("error")) {
+                            return completion_handler(Err(parse_error(&error)));
                         }
 
                         // Unwrap "success" key, if present
@@ -241,8 +240,10 @@ impl Session {
         &self,
         completion_handler: impl FnOnce(Result<(), Retained<NSError>>) + 'static,
     ) -> Retained<NSURLSessionTask> {
-        let json =
-            NSDictionary::from_id_slice(&[ns_string!("devicetype")], &[ns_string!("test").copy()]);
+        let json = NSDictionary::from_retained_objects(
+            &[ns_string!("devicetype")],
+            &[ns_string!("test").copy()],
+        );
         let username_rc = Rc::clone(&self.username);
         self.request(
             ns_string!("POST"),
@@ -251,24 +252,23 @@ impl Session {
             move |res| {
                 completion_handler(res.map(|obj| {
                     let array = obj
-                        .downcast::<NSArray>()
+                        .downcast_ref::<NSArray>()
                         .unwrap_or_else(|| todo!("invalid response: {obj:?}"));
 
                     let dict = array
-                        .get(0)
-                        .expect("response should have item")
-                        .downcast::<NSDictionary<NSString>>()
-                        .unwrap_or_else(|| todo!("invalid response: {array:?}"));
+                        .objectAtIndex(0)
+                        .downcast::<NSDictionary>()
+                        .unwrap_or_else(|_| todo!("invalid response: {array:?}"));
 
                     let username = dict
-                        .get(ns_string!("username"))
+                        .objectForKey(ns_string!("username"))
                         .expect("no username")
                         .downcast::<NSString>()
-                        .unwrap_or_else(|| todo!("invalid username: {dict:?}"));
+                        .unwrap_or_else(|_| todo!("invalid username: {dict:?}"));
 
-                    dbg!(username);
+                    dbg!(&username);
 
-                    *username_rc.borrow_mut() = Some(username.copy());
+                    *username_rc.borrow_mut() = Some(username);
                 }))
             },
         )

@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
-use objc2::{declare_class, msg_send_id, mutability, ClassType, DeclaredClass};
+use objc2::{declare_class, msg_send_id, ClassType, DeclaredClass, MainThreadOnly};
 use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy, NSApplicationDelegate};
 use objc2_foundation::{MainThreadMarker, NSNotification, NSObject, NSObjectProtocol, NSString};
 
@@ -12,7 +12,6 @@ use crate::api::Session;
 use crate::menu::MenuDelegate;
 
 mod api;
-mod cast;
 mod light_controller;
 mod menu;
 mod preferences;
@@ -29,7 +28,7 @@ declare_class!(
 
     unsafe impl ClassType for AppDelegate {
         type Super = NSObject;
-        type Mutability = mutability::MainThreadOnly;
+        type ThreadKind = dyn MainThreadOnly;
         const NAME: &'static str = "AppDelegate";
     }
 
@@ -84,6 +83,8 @@ impl AppDelegate {
     }
 
     fn init(&self) {
+        println!("bar");
+        eprintln!("foo");
         self.ivars()
             .menu
             .set(MenuDelegate::new(self, self.ivars().session.clone()))
@@ -116,5 +117,5 @@ fn main() {
     let object = ProtocolObject::from_ref(&*delegate);
     app.setDelegate(Some(object));
 
-    unsafe { app.run() };
+    app.run();
 }
