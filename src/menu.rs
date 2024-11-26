@@ -3,7 +3,7 @@ use std::cell::RefCell;
 
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
-use objc2::{declare_class, msg_send_id, sel, ClassType, DeclaredClass, MainThreadOnly, Message};
+use objc2::{define_class, msg_send_id, sel, DeclaredClass, MainThreadOnly, Message};
 use objc2_app_kit::{
     NSImage, NSMenu, NSMenuDelegate, NSMenuItem, NSStatusBar, NSStatusItem, NSStatusItemBehavior,
     NSVariableStatusItemLength,
@@ -26,19 +26,13 @@ pub struct Ivars {
     light_controllers: RefCell<Retained<NSMutableArray<LightController>>>,
 }
 
-declare_class!(
+define_class!(
+    #[unsafe(super(NSObject))]
+    #[thread_kind = MainThreadOnly]
+    #[name = "MenuDelegate"]
+    #[ivars = Ivars]
     #[derive(Debug)]
     pub struct MenuDelegate;
-
-    unsafe impl ClassType for MenuDelegate {
-        type Super = NSObject;
-        type ThreadKind = dyn MainThreadOnly;
-        const NAME: &'static str = "MenuDelegate";
-    }
-
-    impl DeclaredClass for MenuDelegate {
-        type Ivars = Ivars;
-    }
 
     unsafe impl NSObjectProtocol for MenuDelegate {}
 

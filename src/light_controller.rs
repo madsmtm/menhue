@@ -4,7 +4,7 @@ use std::{
 };
 
 use objc2::{
-    declare_class, msg_send_id, rc::Retained, runtime::AnyObject, sel, ClassType, DeclaredClass,
+    define_class, msg_send_id, rc::Retained, runtime::AnyObject, sel, DeclaredClass,
     MainThreadOnly, Message,
 };
 use objc2_app_kit::{
@@ -27,19 +27,13 @@ pub struct Ivars {
     last_updated_bri: Cell<Instant>,
 }
 
-declare_class!(
+define_class!(
+    #[unsafe(super(NSObject))]
+    #[thread_kind = MainThreadOnly]
+    #[name = "LightControl"]
+    #[ivars = Ivars]
     #[derive(Debug)]
     pub struct LightController;
-
-    unsafe impl ClassType for LightController {
-        type Super = NSObject;
-        type ThreadKind = dyn MainThreadOnly;
-        const NAME: &'static str = "LightControl";
-    }
-
-    impl DeclaredClass for LightController {
-        type Ivars = Ivars;
-    }
 
     unsafe impl NSObjectProtocol for LightController {}
 

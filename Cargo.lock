@@ -11,25 +11,25 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 [[package]]
 name = "block2"
 version = "0.5.1"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "objc2",
 ]
 
 [[package]]
 name = "cc"
-version = "1.1.36"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baee610e9452a8f6f0a1b6194ec09ff9e2d85dea54432acdae41aa0761c95d70"
+checksum = "fd9de9f2205d5ef3fd67e685b0df337994ddd4495e2a28d185500d0e1edfea47"
 dependencies = [
  "shlex",
 ]
 
 [[package]]
 name = "libc"
-version = "0.2.158"
+version = "0.2.165"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
+checksum = "fcb4d3d38eab6c5239a362fa8bae48c03baf980a6e7079f063942d563ef3533e"
 
 [[package]]
 name = "menhue"
@@ -44,7 +44,7 @@ dependencies = [
 [[package]]
 name = "objc2"
 version = "0.5.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "objc2-encode",
  "objc2-exception-helper",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "objc2-app-kit"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "bitflags",
  "block2",
@@ -70,7 +70,7 @@ dependencies = [
 [[package]]
 name = "objc2-cloud-kit"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "bitflags",
  "block2",
@@ -82,7 +82,7 @@ dependencies = [
 [[package]]
 name = "objc2-contacts"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "block2",
  "objc2",
@@ -92,7 +92,7 @@ dependencies = [
 [[package]]
 name = "objc2-core-data"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "bitflags",
  "block2",
@@ -103,7 +103,7 @@ dependencies = [
 [[package]]
 name = "objc2-core-image"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "block2",
  "objc2",
@@ -114,7 +114,7 @@ dependencies = [
 [[package]]
 name = "objc2-core-location"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "block2",
  "objc2",
@@ -125,12 +125,12 @@ dependencies = [
 [[package]]
 name = "objc2-encode"
 version = "4.0.3"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 
 [[package]]
 name = "objc2-exception-helper"
 version = "0.1.0"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "cc",
 ]
@@ -138,7 +138,7 @@ dependencies = [
 [[package]]
 name = "objc2-foundation"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "bitflags",
  "block2",
@@ -149,7 +149,7 @@ dependencies = [
 [[package]]
 name = "objc2-metal"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "bitflags",
  "block2",
@@ -160,7 +160,7 @@ dependencies = [
 [[package]]
 name = "objc2-quartz-core"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "bitflags",
  "block2",
@@ -172,7 +172,7 @@ dependencies = [
 [[package]]
 name = "objc2-uniform-type-identifiers"
 version = "0.2.2"
-source = "git+https://github.com/madsmtm/objc2#ca864cad4a2c751ca423d71a8b5580f03484ebe4"
+source = "git+https://github.com/madsmtm/objc2#89efc9e04630c07aefdab013fe4ebd9c24bdf52b"
 dependencies = [
  "block2",
  "objc2",

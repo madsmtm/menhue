@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
-use objc2::{declare_class, msg_send_id, ClassType, DeclaredClass, MainThreadOnly};
+use objc2::{define_class, msg_send_id, DeclaredClass, MainThreadOnly};
 use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy, NSApplicationDelegate};
 use objc2_foundation::{MainThreadMarker, NSNotification, NSObject, NSObjectProtocol, NSString};
 
@@ -23,18 +23,12 @@ struct Ivars {
     username: Rc<RefCell<Option<Retained<NSString>>>>,
 }
 
-declare_class!(
+define_class!(
+    #[unsafe(super(NSObject))]
+    #[thread_kind = MainThreadOnly]
+    #[name = "AppDelegate"]
+    #[ivars = Ivars]
     struct AppDelegate;
-
-    unsafe impl ClassType for AppDelegate {
-        type Super = NSObject;
-        type ThreadKind = dyn MainThreadOnly;
-        const NAME: &'static str = "AppDelegate";
-    }
-
-    impl DeclaredClass for AppDelegate {
-        type Ivars = Ivars;
-    }
 
     unsafe impl NSObjectProtocol for AppDelegate {}
 
