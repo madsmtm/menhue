@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
-use objc2::{define_class, msg_send_id, DeclaredClass, MainThreadOnly};
+use objc2::{define_class, msg_send, DeclaredClass, MainThreadOnly};
 use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy, NSApplicationDelegate};
 use objc2_foundation::{MainThreadMarker, NSNotification, NSObject, NSObjectProtocol, NSString};
 
@@ -33,19 +33,20 @@ define_class!(
     unsafe impl NSObjectProtocol for AppDelegate {}
 
     unsafe impl NSApplicationDelegate for AppDelegate {
-        #[method(applicationDidFinishLaunching:)]
+        #[unsafe(method(applicationDidFinishLaunching:))]
         fn _did_finish_launching(&self, _notification: &NSNotification) {
             self.init();
         }
 
-        #[method(applicationWillTerminate:)]
+        #[unsafe(method(applicationWillTerminate:))]
         fn _will_terminate(&self, _notification: &NSNotification) {
             self.destroy();
         }
     }
 
-    unsafe impl AppDelegate {
-        #[method(openPreferences:)]
+    /// Menu actions.
+    impl AppDelegate {
+        #[unsafe(method(openPreferences:))]
         fn _open_preferences(&self, _sender: Option<&AnyObject>) {
             let mtm = MainThreadMarker::from(self);
             eprintln!("open prefs");
@@ -73,7 +74,7 @@ impl AppDelegate {
             menu: OnceCell::new(),
             username,
         });
-        unsafe { msg_send_id![super(this), init] }
+        unsafe { msg_send![super(this), init] }
     }
 
     fn init(&self) {

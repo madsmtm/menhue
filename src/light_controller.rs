@@ -4,16 +4,16 @@ use std::{
 };
 
 use objc2::{
-    define_class, msg_send_id, rc::Retained, runtime::AnyObject, sel, DeclaredClass,
-    MainThreadOnly, Message,
+    define_class, msg_send, rc::Retained, runtime::AnyObject, sel, DeclaredClass, MainThreadOnly,
+    Message,
 };
 use objc2_app_kit::{
     NSLayoutAttribute, NSLayoutConstraint, NSSlider, NSStackView, NSStackViewDistribution,
     NSTextField, NSUserInterfaceLayoutOrientation, NSView,
 };
 use objc2_foundation::{
-    ns_string, CGSize, MainThreadMarker, NSArray, NSCopying, NSDictionary, NSInteger, NSNumber,
-    NSObject, NSObjectNSDelayedPerforming, NSObjectProtocol, NSRunLoopCommonModes, NSString,
+    ns_string, MainThreadMarker, NSArray, NSCopying, NSDictionary, NSInteger, NSNumber, NSObject,
+    NSObjectNSDelayedPerforming, NSObjectProtocol, NSRunLoopCommonModes, NSSize, NSString,
 };
 
 use crate::api::Session;
@@ -37,13 +37,14 @@ define_class!(
 
     unsafe impl NSObjectProtocol for LightController {}
 
-    unsafe impl LightController {
-        #[method(dragSlider:)]
+    /// Called elsewhere.
+    impl LightController {
+        #[unsafe(method(dragSlider:))]
         fn _drag_slider(&self, _slider: &NSSlider) {
             self.queue_update_bri();
         }
 
-        #[method(setBri:)]
+        #[unsafe(method(setBri:))]
         fn _update_bri_from_slider(&self, _: Option<&AnyObject>) {
             self.update_bri_from_slider();
         }
@@ -60,7 +61,7 @@ impl LightController {
     ) -> Retained<Self> {
         unsafe {
             let view = NSView::new(mtm);
-            view.setFrameSize(CGSize {
+            view.setFrameSize(NSSize {
                 height: 100.0,
                 width: 300.0,
             });
@@ -84,7 +85,7 @@ impl LightController {
             stack.addArrangedSubview(&label);
 
             let slider = NSSlider::new(mtm);
-            slider.setFrameSize(CGSize {
+            slider.setFrameSize(NSSize {
                 height: 50.0,
                 width: 250.0,
             });
@@ -120,7 +121,7 @@ impl LightController {
                 session,
                 last_updated_bri: Cell::new(Instant::now()),
             });
-            let this: Retained<Self> = msg_send_id![super(this), init];
+            let this: Retained<Self> = msg_send![super(this), init];
 
             slider.setTarget(Some(&this));
             slider.setAction(Some(sel!(dragSlider:)));

@@ -40,7 +40,7 @@ impl Session {
             config.setHTTPMaximumConnectionsPerHost(1);
             // We only make requests on direct user action
             config.setNetworkServiceType(
-                NSURLRequestNetworkServiceType::NSURLNetworkServiceTypeResponsiveData,
+                NSURLRequestNetworkServiceType::NetworkServiceTypeResponsiveData,
             );
             let url_session = NSURLSession::sessionWithConfiguration_delegate_delegateQueue(
                 &config,
@@ -81,13 +81,13 @@ impl Session {
             let body = json_object.map(|json_object| {
                 NSJSONSerialization::dataWithJSONObject_options_error(
                     json_object,
-                    NSJSONWritingOptions::NSJSONWritingPrettyPrinted,
+                    NSJSONWritingOptions::PrettyPrinted,
                 )
                 .expect("json writing")
             });
 
             let request = NSMutableURLRequest::requestWithURL(&url);
-            request.setCachePolicy(NSURLRequestCachePolicy::NSURLRequestReloadIgnoringCacheData);
+            request.setCachePolicy(NSURLRequestCachePolicy::ReloadIgnoringCacheData);
             request.setHTTPMethod(method);
             request.setHTTPBody(body.as_deref());
             request.addValue_forHTTPHeaderField(

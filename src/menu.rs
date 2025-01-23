@@ -3,7 +3,7 @@ use std::cell::RefCell;
 
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, ProtocolObject};
-use objc2::{define_class, msg_send_id, sel, DeclaredClass, MainThreadOnly, Message};
+use objc2::{define_class, msg_send, sel, DeclaredClass, MainThreadOnly, Message};
 use objc2_app_kit::{
     NSImage, NSMenu, NSMenuDelegate, NSMenuItem, NSStatusBar, NSStatusItem, NSStatusItemBehavior,
     NSVariableStatusItemLength,
@@ -38,7 +38,7 @@ define_class!(
 
     #[allow(non_snake_case)]
     unsafe impl NSMenuDelegate for MenuDelegate {
-        #[method(menuNeedsUpdate:)]
+        #[unsafe(method(menuNeedsUpdate:))]
         fn menuNeedsUpdate(&self, _menu: &NSMenu) {
             self.needs_update();
         }
@@ -80,7 +80,7 @@ impl MenuDelegate {
                 session,
                 light_controllers: RefCell::new(NSMutableArray::new()),
             });
-            let this: Retained<Self> = msg_send_id![super(this), init];
+            let this: Retained<Self> = msg_send![super(this), init];
 
             let menu = &this.ivars().menu;
             menu.setDelegate(Some(ProtocolObject::from_ref(&*this)));
