@@ -15,3 +15,9 @@ objc2-app-kit = "0.3"
 [profile.dev]
 # For possibly better system backtraces on macOS
 panic = "abort"
+
+#
+# NOTE: Remember to run the following when changing this:
+#
+# nix-shell -p crate2nix --run "crate2nix generate"
+#

@@ -14,7 +14,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.path;
-      default = pkgs.callPackage ./menhue.nix { };
+      default = (pkgs.callPackage ./Cargo.nix { }).rootCrate.build;
       defaultText = "menhue.nix";
     };
 
