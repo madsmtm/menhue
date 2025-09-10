@@ -31,10 +31,11 @@ in
 
   ##### implementation
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ cfg.package ];
     launchd.user.agents.menhue = {
       serviceConfig = {
         Label = "dk.marquart.menhue";
-        Program = "${cfg.package}/bin/menhue";
+        ProgramArguments = [ "${cfg.package}/bin/menhue" ];
         RunAtLoad = true;
         EnvironmentVariables = {
           HOST = cfg.host;
