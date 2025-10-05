@@ -51,146 +51,142 @@ const TAG_LIGHT: isize = 2;
 impl MenuDelegate {
     pub fn new(app_delegate: &AppDelegate, session: Session) -> Retained<Self> {
         let mtm = MainThreadMarker::from(app_delegate);
+        let status_bar = NSStatusBar::systemStatusBar();
+        let status_bar_item = status_bar.statusItemWithLength(NSVariableStatusItemLength);
+
+        //
+        status_bar_item.setBehavior(NSStatusItemBehavior::TerminationOnRemoval);
+        status_bar_item.setVisible(true);
+
+        // Documented to create a button for us
+        let button = status_bar_item
+            .button(mtm)
+            .expect("the system did not create a status bar button");
+
+        let image = NSImage::imageWithSystemSymbolName_accessibilityDescription(
+            ns_string!("lightbulb"),
+            None,
+        )
+        .unwrap();
+        button.setImage(Some(&image));
+
+        let menu = NSMenu::new(mtm);
+        status_bar_item.setMenu(Some(&menu));
+
+        let this = mtm.alloc().set_ivars(Ivars {
+            _status_bar_item: status_bar_item,
+            menu,
+            session,
+            light_controllers: RefCell::new(NSMutableArray::new()),
+        });
+        let this: Retained<Self> = unsafe { msg_send![super(this), init] };
+
+        let menu = &this.ivars().menu;
+        menu.setDelegate(Some(ProtocolObject::from_ref(&*this)));
+
+        let item = NSMenuItem::new(mtm);
+        item.setTitle(ns_string!("Loading..."));
+        item.setHidden(true);
+        item.setTag(TAG_LOADING);
+        menu.addItem(&item);
+
+        let item = NSMenuItem::separatorItem(mtm);
+        menu.addItem(&item);
+
+        let item = NSMenuItem::new(mtm);
+        item.setTitle(ns_string!("Preferences..."));
         unsafe {
-            let status_bar = NSStatusBar::systemStatusBar();
-            let status_bar_item = status_bar.statusItemWithLength(NSVariableStatusItemLength);
-
-            //
-            status_bar_item.setBehavior(NSStatusItemBehavior::TerminationOnRemoval);
-            status_bar_item.setVisible(true);
-
-            // Documented to create a button for us
-            let button = status_bar_item
-                .button(mtm)
-                .expect("the system did not create a status bar button");
-
-            let image = NSImage::imageWithSystemSymbolName_accessibilityDescription(
-                ns_string!("lightbulb"),
-                None,
-            )
-            .unwrap();
-            button.setImage(Some(&image));
-
-            let menu = NSMenu::new(mtm);
-            status_bar_item.setMenu(Some(&menu));
-
-            let this = mtm.alloc().set_ivars(Ivars {
-                _status_bar_item: status_bar_item,
-                menu,
-                session,
-                light_controllers: RefCell::new(NSMutableArray::new()),
-            });
-            let this: Retained<Self> = msg_send![super(this), init];
-
-            let menu = &this.ivars().menu;
-            menu.setDelegate(Some(ProtocolObject::from_ref(&*this)));
-
-            let item = NSMenuItem::new(mtm);
-            item.setTitle(ns_string!("Loading..."));
-            item.setHidden(true);
-            item.setTag(TAG_LOADING);
-            menu.addItem(&item);
-
-            let item = NSMenuItem::separatorItem(mtm);
-            menu.addItem(&item);
-
-            let item = NSMenuItem::new(mtm);
-            item.setTitle(ns_string!("Preferences..."));
             item.setTarget(Some(app_delegate));
             item.setAction(Some(sel!(openPreferences:)));
-            menu.addItem(&item);
-
-            let item = NSMenuItem::separatorItem(mtm);
-            menu.addItem(&item);
-
-            let item = NSMenuItem::new(mtm);
-            item.setTitle(ns_string!("Quit"));
-            item.setAction(Some(sel!(terminate:)));
-            menu.addItem(&item);
-
-            this
         }
+        menu.addItem(&item);
+
+        let item = NSMenuItem::separatorItem(mtm);
+        menu.addItem(&item);
+
+        let item = NSMenuItem::new(mtm);
+        item.setTitle(ns_string!("Quit"));
+        unsafe { item.setAction(Some(sel!(terminate:))) };
+        menu.addItem(&item);
+
+        this
     }
 
     fn set_loading(&self, loading: bool) {
-        unsafe {
-            let item = self
-                .ivars()
-                .menu
-                .itemWithTag(TAG_LOADING)
-                .expect("loading item");
-            item.setHidden(!loading);
-        }
+        let item = self
+            .ivars()
+            .menu
+            .itemWithTag(TAG_LOADING)
+            .expect("loading item");
+        item.setHidden(!loading);
     }
 
     fn update_lights(&self, obj: &AnyObject) {
         let mtm = MainThreadMarker::from(self);
         let menu = &self.ivars().menu;
-        unsafe {
-            let light_controllers = self.ivars().light_controllers.borrow_mut();
+        let light_controllers = self.ivars().light_controllers.borrow_mut();
 
-            // Clear existing menus
-            while let Some(item) = menu.itemWithTag(TAG_LIGHT) {
-                menu.removeItem(&item);
-            }
-            light_controllers.removeAllObjects();
+        // Clear existing menus
+        while let Some(item) = menu.itemWithTag(TAG_LIGHT) {
+            menu.removeItem(&item);
+        }
+        light_controllers.removeAllObjects();
 
-            let data = obj
-                .downcast_ref::<NSDictionary>()
+        let data = obj
+            .downcast_ref::<NSDictionary>()
+            .expect("invalid response");
+
+        // Add new menus
+        for (i, light_id) in data.keys().enumerate() {
+            let light_id = light_id.downcast::<NSString>().expect("invalid response");
+
+            let dict = data
+                .objectForKey(&light_id)
+                .unwrap()
+                .downcast::<NSDictionary>()
                 .expect("invalid response");
 
-            // Add new menus
-            for (i, light_id) in data.keys().enumerate() {
-                let light_id = light_id.downcast::<NSString>().expect("invalid response");
+            let name = dict
+                .objectForKey(ns_string!("name"))
+                .expect("name")
+                .downcast::<NSString>()
+                .expect("invalid name");
 
-                let dict = data
-                    .objectForKey(&light_id)
-                    .unwrap()
-                    .downcast::<NSDictionary>()
-                    .expect("invalid response");
+            let state = dict
+                .objectForKey(ns_string!("state"))
+                .expect("state")
+                .downcast::<NSDictionary>()
+                .expect("invalid state");
 
-                let name = dict
-                    .objectForKey(ns_string!("name"))
-                    .expect("name")
-                    .downcast::<NSString>()
-                    .expect("invalid name");
+            let reachable = state
+                .objectForKey(ns_string!("reachable"))
+                .expect("reachable")
+                .downcast::<NSNumber>()
+                .expect("invalid reachable")
+                .as_bool();
 
-                let state = dict
-                    .objectForKey(ns_string!("state"))
-                    .expect("state")
-                    .downcast::<NSDictionary>()
-                    .expect("invalid state");
-
-                let reachable = state
-                    .objectForKey(ns_string!("reachable"))
-                    .expect("reachable")
-                    .downcast::<NSNumber>()
-                    .expect("invalid reachable")
-                    .as_bool();
-
-                if !reachable {
-                    // Ignore light if not reachable
-                    continue;
-                }
-
-                let bri = state
-                    .objectForKey(ns_string!("bri"))
-                    .expect("bri")
-                    .downcast::<NSNumber>()
-                    .expect("invalid bri")
-                    .integerValue();
-
-                let light_control =
-                    LightController::new(&light_id, &name, bri, self.ivars().session.clone(), mtm);
-
-                let item = NSMenuItem::new(mtm);
-                item.setTitle(&name);
-                item.setView(Some(light_control.view()));
-                item.setTag(TAG_LIGHT);
-                menu.insertItem_atIndex(&item, i as isize + 1);
-
-                light_controllers.addObject(&light_control);
+            if !reachable {
+                // Ignore light if not reachable
+                continue;
             }
+
+            let bri = state
+                .objectForKey(ns_string!("bri"))
+                .expect("bri")
+                .downcast::<NSNumber>()
+                .expect("invalid bri")
+                .integerValue();
+
+            let light_control =
+                LightController::new(&light_id, &name, bri, self.ivars().session.clone(), mtm);
+
+            let item = NSMenuItem::new(mtm);
+            item.setTitle(&name);
+            item.setView(Some(light_control.view()));
+            item.setTag(TAG_LIGHT);
+            menu.insertItem_atIndex(&item, i as isize + 1);
+
+            light_controllers.addObject(&light_control);
         }
     }
 

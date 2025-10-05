@@ -5,6 +5,6 @@ pub fn open_preferences(mtm: MainThreadMarker) {
     let app = NSApplication::sharedApplication(mtm);
     #[allow(deprecated)] // The newer `activate` is only available on macOS 14
     app.activateIgnoringOtherApps(false);
-    unsafe { app.orderFrontStandardAboutPanel(None) };
+    app.orderFrontStandardAboutPanel(None);
     // deactivate on close
 }

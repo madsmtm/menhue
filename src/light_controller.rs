@@ -59,79 +59,77 @@ impl LightController {
         session: Session,
         mtm: MainThreadMarker,
     ) -> Retained<Self> {
+        let view = NSView::new(mtm);
+        view.setFrameSize(NSSize {
+            height: 100.0,
+            width: 300.0,
+        });
+        // view.setAutoresizingMask(NSAutoresizingMaskOptions::NSViewWidthSizable);
+        // view.setTranslatesAutoresizingMaskIntoConstraints(false);
+
+        let stack = NSStackView::new(mtm);
+        stack.setOrientation(NSUserInterfaceLayoutOrientation::Vertical);
+        stack.setDistribution(NSStackViewDistribution::FillEqually);
+        stack.setAlignment(NSLayoutAttribute::Left);
+        view.addSubview(&stack);
+        stack.setTranslatesAutoresizingMaskIntoConstraints(false);
+
+        let label = NSTextField::labelWithString(name, mtm);
+        // label.setStringValue(name);
+        // label.setBackgroundColor(Some(&NSColor::colorWithRed_green_blue_alpha(
+        //     0.0, 0.0, 0.0, 0.0,
+        // )));
+        // label.setBezeled(false);
+        // label.setEditable(false);
+        stack.addArrangedSubview(&label);
+
+        let slider = NSSlider::new(mtm);
+        slider.setFrameSize(NSSize {
+            height: 50.0,
+            width: 250.0,
+        });
+        slider.setMinValue(0.0);
+        slider.setMaxValue(254.0);
+        slider.setIntegerValue(bri);
+        stack.addArrangedSubview(&slider);
+
+        NSLayoutConstraint::activateConstraints(&NSArray::from_retained_slice(&[
+            stack
+                .leftAnchor()
+                .constraintEqualToAnchor_constant(&view.layoutMarginsGuide().leftAnchor(), -4.0),
+            stack
+                .rightAnchor()
+                .constraintEqualToAnchor_constant(&view.layoutMarginsGuide().rightAnchor(), 4.0),
+            // {
+            //     let constraint = stack
+            //         .widthAnchor()
+            //         .constraintEqualToAnchor(&view.widthAnchor());
+            //     constraint.setPriority(NSLayoutPriorityDefaultLow);
+            //     constraint
+            // },
+            view.heightAnchor()
+                .constraintEqualToAnchor(&stack.heightAnchor()),
+        ]));
+
+        let this = mtm.alloc().set_ivars(Ivars {
+            light_id: light_id.copy(),
+            view,
+            slider: slider.retain(),
+            session,
+            last_updated_bri: Cell::new(Instant::now()),
+        });
+        let this: Retained<Self> = unsafe { msg_send![super(this), init] };
+
         unsafe {
-            let view = NSView::new(mtm);
-            view.setFrameSize(NSSize {
-                height: 100.0,
-                width: 300.0,
-            });
-            // view.setAutoresizingMask(NSAutoresizingMaskOptions::NSViewWidthSizable);
-            // view.setTranslatesAutoresizingMaskIntoConstraints(false);
-
-            let stack = NSStackView::new(mtm);
-            stack.setOrientation(NSUserInterfaceLayoutOrientation::Vertical);
-            stack.setDistribution(NSStackViewDistribution::FillEqually);
-            stack.setAlignment(NSLayoutAttribute::Left);
-            view.addSubview(&stack);
-            stack.setTranslatesAutoresizingMaskIntoConstraints(false);
-
-            let label = NSTextField::labelWithString(name, mtm);
-            // label.setStringValue(name);
-            // label.setBackgroundColor(Some(&NSColor::colorWithRed_green_blue_alpha(
-            //     0.0, 0.0, 0.0, 0.0,
-            // )));
-            // label.setBezeled(false);
-            // label.setEditable(false);
-            stack.addArrangedSubview(&label);
-
-            let slider = NSSlider::new(mtm);
-            slider.setFrameSize(NSSize {
-                height: 50.0,
-                width: 250.0,
-            });
-            slider.setMinValue(0.0);
-            slider.setMaxValue(254.0);
-            slider.setIntegerValue(bri);
-            stack.addArrangedSubview(&slider);
-
-            NSLayoutConstraint::activateConstraints(&NSArray::from_retained_slice(&[
-                stack.leftAnchor().constraintEqualToAnchor_constant(
-                    &view.layoutMarginsGuide().leftAnchor(),
-                    -4.0,
-                ),
-                stack.rightAnchor().constraintEqualToAnchor_constant(
-                    &view.layoutMarginsGuide().rightAnchor(),
-                    4.0,
-                ),
-                // {
-                //     let constraint = stack
-                //         .widthAnchor()
-                //         .constraintEqualToAnchor(&view.widthAnchor());
-                //     constraint.setPriority(NSLayoutPriorityDefaultLow);
-                //     constraint
-                // },
-                view.heightAnchor()
-                    .constraintEqualToAnchor(&stack.heightAnchor()),
-            ]));
-
-            let this = mtm.alloc().set_ivars(Ivars {
-                light_id: light_id.copy(),
-                view,
-                slider: slider.retain(),
-                session,
-                last_updated_bri: Cell::new(Instant::now()),
-            });
-            let this: Retained<Self> = msg_send![super(this), init];
-
             slider.setTarget(Some(&this));
             slider.setAction(Some(sel!(dragSlider:)));
-
-            this
         }
+
+        this
     }
 
     fn update_bri_from_slider(&self) {
-        let bri = unsafe { self.ivars().slider.integerValue() };
+        let bri = self.ivars().slider.integerValue();
         let path = format!("/lights/{}/state", self.ivars().light_id);
         let json = NSDictionary::from_retained_objects(
             &[
